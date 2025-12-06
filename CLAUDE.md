@@ -12,8 +12,9 @@ NVIDIA Hybrid RAG - An NVIDIA AI Workbench application providing a flexible RAG 
 ┌─────────────────────────────────────────────────────────────────┐
 │  Gradio Chat UI (Port 8080)                                     │
 │  code/chatui/ - FastAPI + Gradio mount                          │
-│  └─ pages/converse.py: Main chat interface                      │
-│  └─ chat_client.py: HTTP client for backend                     │
+│  ├─ /content/      → pages/converse.py (main chat)              │
+│  ├─ /content/kb    → pages/kb.py (knowledge base)               │
+│  └─ /content/demo  → pages/simple_chat.py (simplified demo)     │
 └──────────────────────────┬──────────────────────────────────────┘
                            │ HTTP
 ┌──────────────────────────▼──────────────────────────────────────┐
@@ -30,6 +31,15 @@ NVIDIA Hybrid RAG - An NVIDIA AI Workbench application providing a flexible RAG 
 │ Port 19530  │   │ Port 9090     │   │ (Cloud/NIM) │
 └─────────────┘   └───────────────┘   └─────────────┘
 ```
+
+### Port Reference
+| Port  | Service                          |
+|-------|----------------------------------|
+| 8080  | Gradio Chat UI (frontend)        |
+| 8000  | Chain Server API / Local NIM     |
+| 9090  | TGI local inference server       |
+| 19530 | Milvus vector database           |
+| 8888  | JupyterLab (development)
 
 ## Key Commands
 
