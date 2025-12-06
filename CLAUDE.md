@@ -45,17 +45,25 @@ NVIDIA Hybrid RAG - An NVIDIA AI Workbench application providing a flexible RAG 
 
 ### Start Backend Services
 ```bash
-# Initialize Milvus + Chain Server (run once)
+# Initialize Milvus + Chain Server (run once, starts both services)
 bash /project/code/scripts/rag-consolidated.sh
 ```
 
 ### Run Applications
 ```bash
-# Start ChatUI (main app)
+# Start ChatUI (main app) - uses ui-env conda environment
 cd /project/code/ && python -m chatui --port 8080 --host 0.0.0.0
 
-# Start Chain Server directly
+# Start Chain Server directly - uses api-env conda environment
 cd /project/code/ && python -m uvicorn chain_server.server:app --port=8000 --host='0.0.0.0'
+```
+
+### Development Workflow
+```bash
+# Edit code in JupyterLab (port 8888) or VSCode
+# Stop and restart the Chat app to see changes
+pkill -f "python3 -m chatui"
+cd /project/code/ && python -m chatui --port 8080 --host 0.0.0.0
 ```
 
 ### Local Inference Management
@@ -89,12 +97,22 @@ bash /project/code/scripts/upload-docs.sh
 - `requirements.txt` - Python dependencies
 - `variables.env` - Environment variables (HF cache, embedding device)
 
+## Inference Modes
+
+The app supports four inference modes selected in the UI:
+- **Cloud**: NVIDIA API Catalog endpoints (build.nvidia.com) - requires `NVIDIA_API_KEY`
+- **Local System**: Hugging Face TGI on local GPU (port 9090) - supports 4/8-bit quantization
+- **Self-hosted Microservice**: Remote NIM or Ollama (OpenAI-compatible API)
+- **Local NIM**: Docker-composed NIM container (port 8000 via compose.yaml)
+
 ## Important Code Locations
 
 ### Frontend (code/chatui/)
 - `__main__.py` - Entry point, starts uvicorn server
+- `api.py` - FastAPI server that mounts Gradio apps
 - `pages/converse.py` - Main chat interface (settings, chat, document upload)
 - `pages/kb.py` - Knowledge base management
+- `pages/simple_chat.py` - Simplified demo chat
 - `chat_client.py` - Backend HTTP client with streaming support
 - `configuration.py` - AppConfig dataclass
 
@@ -102,10 +120,11 @@ bash /project/code/scripts/upload-docs.sh
 - `server.py` - FastAPI endpoints: `/health`, `/uploadDocument`, `/generate`, `/documentSearch`
 - `chains.py` - RAG chain logic: `ingest_docs()`, `rag_chain_streaming()`, `document_search()`
 - `nvcf_llm.py` - NVIDIA Cloud Functions LLM interface
+- `trt_llm.py` - TensorRT LLM support
 - `chat_templates.py` - Prompt templates per model family
 
 ### Helper Scripts (code/scripts/)
-- `helpers/docs.py` - `DocProcessor` class with file hash caching
+- `helpers/docs.py` - `DocProcessor` class with file hash caching (`.file_cache.json`)
 - `helpers/upload-docs.py` - CLI document upload
 - `helpers/empty-docs.py` - CLI to clear database
 
@@ -122,5 +141,14 @@ bash /project/code/scripts/upload-docs.sh
 
 - Two separate conda environments: `api-env` (backend) and `ui-env` (frontend)
 - Requires `NVIDIA_API_KEY` secret for cloud inference
+- Gated HuggingFace models require `HUGGING_FACE_HUB_TOKEN` environment variable
 - GPU required for local inference (CUDA 11.8)
 - Build scripts: `preBuild.bash` (system packages), `postBuild.bash` (conda envs + Python deps)
+
+## API Endpoints
+
+The Chain Server exposes these REST endpoints on port 8000:
+- `GET /health` - Health check, returns `{"status": "OK"}`
+- `POST /uploadDocument` - Upload file for ingestion (multipart form)
+- `POST /generate` - RAG query with streaming response (SSE)
+- `POST /documentSearch` - Vector similarity search, returns scored documents
