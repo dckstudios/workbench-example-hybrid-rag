@@ -56,10 +56,21 @@ class APIServer(FastAPI):
             blocks=pages.kb.build_page(self._client),
             path=f"/content{pages.kb.PATH}",
         )
+        _ = gr.mount_gradio_app(
+            self,
+            blocks=pages.simple_chat.build_page(self._client),
+            path=f"/content{pages.simple_chat.PATH}",
+        )
 
         @self.get("/")
         async def root_redirect() -> FileResponse:
             return FileResponse(os.path.join(STATIC_DIR, "converse.html"))
+
+        @self.get("/demo")
+        async def demo_redirect() -> FileResponse:
+            """Redirect to the simple demo chat interface."""
+            from starlette.responses import RedirectResponse
+            return RedirectResponse(url="/content/demo/")
 
         @self.get("/converse")
         async def converse_redirect() -> FileResponse:

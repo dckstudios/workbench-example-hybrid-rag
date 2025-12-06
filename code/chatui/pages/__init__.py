@@ -14,6 +14,6 @@
 # limitations under the License.
 
 """This module contains definitions for all the chatui pages."""
-from chatui.pages import converse, kb
+from chatui.pages import converse, kb, simple_chat
 
-__all__ = ["converse", "kb"]
+__all__ = ["converse", "kb", "simple_chat"]
